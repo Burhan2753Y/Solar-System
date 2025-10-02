@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tychonic System (Log Scaled)</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: radial-gradient(circle at center, #111 0%, #000 100%);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="tychonicCanvas" width="1000" height="1000"></canvas>
+
+  <script>
+    const canvas = document.getElementById("tychonicCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const CENTER_X = canvas.width / 2;
+    const CENTER_Y = canvas.height / 2;
+
+    // Constants
+    const sunOrbitDistanceKm = 149600000; // Sun around Earth
+    const planetOrbitKm = [57900000, 108200000, 227900000, 778500000, 1434000000]; // M -> S
+    const moonOrbitKm = 384400;
+
+    // Speeds (arbitrary for animation)
+    const planetSpeeds = [0.02, 0.015, 0.01, 0.008, 0.004];
+    const sunSpeed = 0.01;
+    const moonSpeed = 0.03;
+
+    let sunAngle = 0;
+    let moonAngle = 0;
+    const planetAngles = new Array(5).fill(0);
+
+    // Logarithmic scale function
+    const scaleDistance = (km) => Math.log10(km) * 35;
+
+    // Scaled radii
+    const sunOrbitRadius = scaleDistance(sunOrbitDistanceKm);
+    const moonOrbitRadius = scaleDistance(moonOrbitKm);
+    const planetOrbitRadii = planetOrbitKm.map(scaleDistance);
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Earth
+      ctx.beginPath();
+      ctx.arc(CENTER_X, CENTER_Y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = "blue";
+      ctx.fill();
+      ctx.font = "14px Arial";
+      ctx.fillStyle = "white";
+      ctx.fillText("Earth", CENTER_X + 12, CENTER_Y + 4);
+
+      // Earth-centered Moon orbit
+      ctx.beginPath();
+      ctx.arc(CENTER_X, CENTER_Y, moonOrbitRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Sun orbit
+      ctx.beginPath();
+      ctx.arc(CENTER_X, CENTER_Y, sunOrbitRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffaa00";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Sun position
+      const sunX = CENTER_X + sunOrbitRadius * Math.cos(sunAngle);
+      const sunY = CENTER_Y + sunOrbitRadius * Math.sin(sunAngle);
+
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = "yellow";
+      ctx.fill();
+      ctx.fillText("Sun", sunX + 10, sunY);
+
+      // Moon position
+      const moonX = CENTER_X + moonOrbitRadius * Math.cos(moonAngle);
+      const moonY = CENTER_Y + moonOrbitRadius * Math.sin(moonAngle);
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "lightgray";
+      ctx.fill();
+      ctx.fillText("Moon", moonX + 6, moonY);
+
+      // Planets
+      const planetNames = ["Mercury", "Venus", "Mars", "Jupiter", "Saturn"];
+      const planetColors = ["gray", "orange", "red", "brown", "lightblue"];
+
+      for (let i = 0; i < planetOrbitRadii.length; i++) {
+        const rFromSun = planetOrbitRadii[i];
+        const rFromEarth = sunOrbitRadius + rFromSun;
+
+        // Draw Earth-centered highlight orbit
+        ctx.beginPath();
+        ctx.arc(CENTER_X, CENTER_Y, rFromEarth, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        ctx.stroke();
+
+        // Planet position around Sun
+        const planetX = sunX + rFromSun * Math.cos(planetAngles[i]);
+        const planetY = sunY + rFromSun * Math.sin(planetAngles[i]);
+
+        ctx.beginPath();
+        ctx.arc(planetX, planetY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = planetColors[i];
+        ctx.fill();
+        ctx.fillText(planetNames[i], planetX + 6, planetY);
+
+        planetAngles[i] += planetSpeeds[i];
+      }
+
+      // Update angles
+      sunAngle += sunSpeed;
+      moonAngle += moonSpeed;
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  </script>
+</body>
+</html>
